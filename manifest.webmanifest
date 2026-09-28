@@ -1,0 +1,26 @@
+{
+  "id": "mobywatel-web-pogladowa",
+  "name": "mObywatel — wersja web (kopia poglądowa)",
+  "short_name": "mObywatel",
+  "description": "Prywatna, lokalna kopia poglądowa interfejsu mObywatela. Dane i zdjęcie zostają na urządzeniu.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "./index.html?zrodlo=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#1B2B45",
+  "background_color": "#1B2B45",
+  "categories": ["utilities", "lifestyle"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Portfel", "short_name": "Portfel", "url": "./index.html?zrodlo=pwa#portfel", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Moje dane", "short_name": "Dane", "url": "./index.html?zrodlo=pwa#dane", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}
