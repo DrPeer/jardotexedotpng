@@ -241,7 +241,9 @@
   .doc{
     position:relative;border-radius:var(--radius-xl);overflow:hidden;color:#fff;
     background:linear-gradient(140deg,var(--doc-red-1) 0%,var(--doc-red-2) 100%);
-    box-shadow:var(--shadow-2);padding:14px 16px 12px;aspect-ratio:1.586;display:flex;flex-direction:column;
+    box-shadow:var(--shadow-2);padding:14px 16px 12px;
+    aspect-ratio:1.586;min-height:252px;      /* proporcja karty, ale bez przycinania treści */
+    display:flex;flex-direction:column;
     animation:docIn .5s cubic-bezier(.2,.8,.2,1) both;
   }
   @keyframes docIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
