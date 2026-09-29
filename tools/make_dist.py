@@ -40,6 +40,10 @@ FILES = [
 EXTRA_README = """mObywatel — wersja web (kopia poglądowa)
 =======================================
 
+UWAGA: ten katalog jest generowany automatycznie. Nie edytuj tu nic ręcznie —
+zmiany wprowadzaj w plikach źródłowych w katalogu głównym repozytorium i wydaj
+polecenie:  python3 tools/make_dist.py --docs --zip
+
 Ten katalog to gotowa strona statyczna. Jak ją opublikować PRYWATNIE:
 
   * Cloudflare Pages + Cloudflare Access (darmowe, login kodem e-mail)
@@ -76,6 +80,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Buduje dist/ gotowy do publikacji.")
     ap.add_argument("--zip", action="store_true",
                     help="dodatkowo spakuj dist/ do dist.zip (do przeciągnięcia na Cloudflare Pages)")
+    ap.add_argument("--docs", action="store_true",
+                    help="dodatkowo skopiuj paczkę do docs/ (dla GitHub Pages: gałąź main, katalog /docs)")
     args = ap.parse_args()
 
     if DIST.exists():
@@ -102,6 +108,17 @@ def main() -> int:
     if missing:
         print("\n  ! Pominięto brakujące pliki: " + ", ".join(missing))
         return 1
+    if args.docs:
+        docs = ROOT / "docs"
+        if docs.exists():
+            shutil.rmtree(docs)
+        shutil.copytree(DIST, docs)
+        # .nojekyll: bez tego GitHub Pages przepuszcza pliki przez Jekylla,
+        # a my chcemy serwować je dokładnie tak, jak leżą.
+        (docs / ".nojekyll").write_text("", encoding="utf-8")
+        print("\n  docs/ gotowe (dla GitHub Pages: Settings -> Pages -> gałąź main, katalog /docs)")
+        print("  Uwaga: GitHub Pages jest PUBLICZNE. To najprostsza droga, ale nie prywatna.")
+
     if args.zip:
         zip_path = make_zip(ROOT / "dist.zip")
         print(f"\n  dist.zip gotowe: {zip_path.stat().st_size / 1024:.0f} kB  ({zip_path})")

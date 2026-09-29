@@ -1,0 +1,22 @@
+mObywatel — wersja web (kopia poglądowa)
+=======================================
+
+UWAGA: ten katalog jest generowany automatycznie. Nie edytuj tu nic ręcznie —
+zmiany wprowadzaj w plikach źródłowych w katalogu głównym repozytorium i wydaj
+polecenie:  python3 tools/make_dist.py --docs --zip
+
+Ten katalog to gotowa strona statyczna. Jak ją opublikować PRYWATNIE:
+
+  * Cloudflare Pages + Cloudflare Access (darmowe, login kodem e-mail)
+    → patrz deploy/PRYWATNY-HOSTING.md w repozytorium.
+
+  * Własny serwer / sieć lokalna:
+    python3 server.py --auth uzytkownik:haslo --open
+
+UWAGA: GitHub Pages NIE udostępnia prywatnych stron (poza GitHub Enterprise
+Cloud). Strona opublikowana przez GitHub Pages jest publiczna, nawet gdy
+repozytorium jest prywatne.
+
+Ta strona nie jest oficjalną aplikacją mObywatel i nie służy do okazywania
+dokumentów. Dane wpisane w aplikacji zostają wyłącznie w przeglądarce
+(localStorage) — nic nie jest wysyłane na serwer.
