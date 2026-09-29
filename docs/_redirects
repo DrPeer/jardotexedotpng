@@ -1,0 +1,5 @@
+# Redirects (Cloudflare Pages / Netlify).
+# Wszystkie nieznane ścieżki wracają do aplikacji (jest jednostronicowa),
+# ale prawdziwe pliki (ikony, sw.js, manifest) mają pierwszeństwo.
+/*
+  /index.html  200

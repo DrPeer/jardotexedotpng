@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>mObywatel — wersja web (kopia poglądowa)</title>
+<meta name="description" content="Niezależna, prywatna kopia poglądowa interfejsu mObywatela na komputer. Wszystkie dane zostają na urządzeniu.">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#1B2B45">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="mObywatel">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="mask-icon" href="icon.svg" color="#1B2B45">
+<style>
+  /* ============================================================
+     Tokeny — kolory zgodne z opublikowanym design systemem
+     mObywatela (granat #1B2B45, akcent #CC2430, tło #F3F6FB).
+     ============================================================ */
+  :root{
+    --primary900:#1B2B45;
+    --primary800:#243758;
+    --primary100:#E4EAF3;
+    --brand-blue:#003C84;
+    --doc-red-1:#D8263C;
+    --doc-red-2:#9E1A2A;
+    --bg:#F3F6FB;
+    --surface:#FFFFFF;
+    --text:#1B2B45;
+    --text-muted:#5A6473;
+    --text-soft:#8A93A2;
+    --line:#DFE5EE;
+    --ok:#0F7B4F;
+    --ok-bg:#E6F4EC;
+    --err:#B3261E;
+    --err-bg:#FCEBEA;
+    --radius-xl:22px;
+    --radius-lg:16px;
+    --radius-md:12px;
+    --shadow-1:0 1px 2px rgba(27,43,69,.06), 0 6px 18px rgba(27,43,69,.07);
+    --shadow-2:0 12px 34px rgba(27,43,69,.22);
+    --tap:44px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:#E7ECF4;
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+    font-size:16px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  /* Ramka „telefonu” na szerokich ekranach; w trybie PWA wypełnia okno */
+  .shell{
+    width:100%;
+    max-width:430px;
+    margin:0 auto;
+    min-height:100dvh;
+    background:var(--bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    box-shadow:0 0 0 1px rgba(27,43,69,.06), 0 30px 60px rgba(27,43,69,.12);
+  }
+  @media (display-mode:standalone), (display-mode:fullscreen), (display-mode:minimal-ui){
+    body{background:var(--bg)}
+    .shell{max-width:none;box-shadow:none}
+  }
+  @media (min-width:520px) and (min-height:760px){
+    body{padding:18px 0;display:flex;align-items:flex-start;justify-content:center}
+    .shell{min-height:calc(100dvh - 36px);border-radius:28px;overflow:hidden}
+  }
+
+  /* ---------- typografia ---------- */
+  h1,h2,h3{margin:0;line-height:1.2;letter-spacing:-.01em}
+  h1{font-size:1.5rem;font-weight:700}
+  h2{font-size:1.12rem;font-weight:700}
+  h3{font-size:.95rem;font-weight:700}
+  p{margin:0}
+  .muted{color:var(--text-muted)}
+  .soft{color:var(--text-soft)}
+  .small{font-size:.82rem}
+  .tiny{font-size:.74rem}
+  .label{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft)}
+  .value{font-size:1rem;font-weight:600}
+  .center{text-align:center}
+
+  /* ---------- layout widoków ---------- */
+  .view{display:none;flex:1;flex-direction:column;padding:22px 20px calc(24px + env(safe-area-inset-bottom))}
+  .view.is-active{display:flex;animation:fade .22s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.view.is-active{animation:none}*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  .view--flush{padding:0}
+  .view--scroll{overflow-y:auto;overscroll-behavior:contain}
+  .stack{display:flex;flex-direction:column;gap:16px;flex:1}
+  .grow{flex:1}
+  .row{display:flex;gap:10px;align-items:center}
+  .row--between{justify-content:space-between}
+  .wrap{flex-wrap:wrap}
+
+  /* ---------- górny pasek ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:12px;
+    padding:calc(14px + env(safe-area-inset-top)) 18px 12px;
+    background:var(--bg);position:sticky;top:0;z-index:20;
+  }
+  .topbar.is-navy{background:var(--primary900);color:#fff}
+  .topbar h1{font-size:1.05rem;font-weight:600;flex:1;text-align:center;margin-right:42px}
+  .iconbtn{
+    width:var(--tap);height:var(--tap);flex:0 0 var(--tap);
+    display:grid;place-items:center;border:0;border-radius:50%;
+    background:transparent;color:inherit;cursor:pointer;
+    transition:background .15s ease;
+  }
+  .iconbtn:hover{background:rgba(27,43,69,.07)}
+  .topbar.is-navy .iconbtn:hover{background:rgba(255,255,255,.12)}
+  .iconbtn:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
+    outline:3px solid #4C7BD9;outline-offset:2px
+  }
+  .iconbtn[hidden]{display:none}
+
+  /* ---------- karta/panel ---------- */
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-1);padding:16px}
+  .card--flush{padding:0;overflow:hidden}
+  .card__title{padding:14px 16px 6px}
+  .info-row{display:flex;justify-content:space-between;gap:16px;padding:12px 16px;border-top:1px solid var(--line)}
+  .info-row:first-of-type{border-top:0}
+  .info-row .k{color:var(--text-muted);font-size:.86rem}
+  .info-row .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+  /* ---------- przyciski ---------- */
+  .btn{
+    appearance:none;border:1.5px solid transparent;border-radius:14px;
+    min-height:var(--tap);padding:12px 18px;
+    font:inherit;font-weight:650;font-size:.98rem;
+    background:var(--primary900);color:#fff;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+    text-decoration:none;
+  }
+  .btn:active{transform:scale(.985)}
+  .btn:hover{background:var(--primary800)}
+  .btn--block{width:100%}
+  .btn--ghost{background:var(--surface);color:var(--primary900);border-color:var(--line)}
+  .btn--ghost:hover{background:#F7F9FD;border-color:#C9D3E2}
+  .btn--text{background:transparent;color:var(--primary900);padding:10px 12px;min-height:40px}
+  .btn--text:hover{background:rgba(27,43,69,.06)}
+  .btn--danger{background:var(--err)}
+  .btn--danger:hover{background:#8F1E18}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+  .btn--sm{min-height:38px;font-size:.88rem;padding:8px 14px;border-radius:12px}
+
+  /* ---------- formularz ---------- */
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field > label{font-size:.86rem;font-weight:600;color:var(--text)}
+  .field .hint{font-size:.76rem;color:var(--text-soft)}
+  .field .err{font-size:.78rem;color:var(--err);display:none}
+  .field.has-error .err{display:block}
+  .field.has-error input{border-color:var(--err);background:var(--err-bg)}
+  .field.ok input,.field.ok select{border-color:#9CCBB4;background:var(--ok-bg)}
+  input,select{
+    width:100%;min-height:var(--tap);
+    padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;
+    background:var(--surface);color:var(--text);font:inherit;font-size:1rem;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input::placeholder{color:#A9B1BE}
+  input:hover,select:hover{border-color:#C6D0E0}
+  input[readonly]{background:#F6F8FC;color:var(--text-muted)}
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%235A6473' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:38px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .section-title{font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-soft);margin:2px 0 -4px}
+
+  /* postęp */
+  .progress{display:flex;gap:6px}
+  .progress i{flex:1;height:4px;border-radius:99px;background:#D8DFEA}
+  .progress i.on{background:var(--primary900)}
+
+  /* ---------- ekran powitalny ---------- */
+  .hero{
+    background:linear-gradient(168deg,#1B2B45 0%,#16243A 55%,#101B2C 100%);
+    color:#fff;display:flex;flex-direction:column;justify-content:space-between;
+    padding:calc(34px + env(safe-area-inset-top)) 24px calc(28px + env(safe-area-inset-bottom));
+    position:relative;overflow:hidden;flex:1;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:auto -30% -40% auto;width:120%;aspect-ratio:1;
+    background:radial-gradient(closest-side,rgba(76,123,217,.35),transparent 70%);
+  }
+  .brand{position:relative;z-index:1}
+  .brand__mark{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+  .brand__mark span{display:inline-block}
+  .brand__flag{display:inline-block;width:22px;height:15px;border-radius:3px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+  .brand__flag i{display:block;height:50%}
+  .brand__flag i:first-child{background:#fff}
+  .brand__flag i:last-child{background:#DC143C}
+  .hero h1{font-size:2rem;font-weight:800;margin:26px 0 10px;max-width:9ch}
+  .hero p{color:#C7D2E4;max-width:34ch}
+  .hero__list{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
+  .hero__list li{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:#DCE4F1}
+  .hero__list svg{flex:0 0 18px;margin-top:2px}
+  .hero__cta{position:relative;z-index:1;margin-top:26px;display:flex;flex-direction:column;gap:10px}
+  .hero .btn{background:#fff;color:var(--primary900)}
+  .hero .btn:hover{background:#EDF2FA}
+  .hero .btn--ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+  .hero .btn--ghost:hover{background:rgba(255,255,255,.1)}
+
+  /* ---------- zdjęcie / kadrowanie ---------- */
+  .cropper{position:relative;width:100%;max-width:300px;margin:0 auto;aspect-ratio:1;border-radius:var(--radius-xl);overflow:hidden;background:#101B2C;box-shadow:var(--shadow-1);touch-action:none;cursor:grab}
+  .cropper:active{cursor:grabbing}
+  .cropper img{position:absolute;left:0;top:0;transform-origin:center center;user-select:none;-webkit-user-drag:none;pointer-events:none;max-width:none}
+  .cropper .ring{position:absolute;inset:8%;border-radius:50%;box-shadow:0 0 0 999px rgba(16,27,44,.55);pointer-events:none}
+  .cropper .ring::after{content:"";position:absolute;inset:0;border:2px solid rgba(255,255,255,.85);border-radius:50%}
+  .slider{display:flex;align-items:center;gap:12px}
+  input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;padding:0;min-height:36px;border:0}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:#D8DFEA}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;border-radius:50%;background:#fff;border:3px solid var(--primary900);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:#D8DFEA}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--primary900);cursor:pointer}
+  .drop{border:1.5px dashed #BFCBDE;border-radius:var(--radius-lg);padding:22px 16px;text-align:center;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+  .drop:hover,.drop.is-over{border-color:var(--primary900);background:#F7F9FD}
+
+  /* ---------- dowód (karta dokumentu) ---------- */
+  .wallet-head{
+    background:linear-gradient(170deg,#1B2B45 0%,#16243A 100%);
+    color:#fff;padding:calc(16px + env(safe-area-inset-top)) 20px 74px;
+    border-radius:0 0 26px 26px;position:relative;
+  }
+  .wallet-head .row{gap:12px}
+  .avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.55);background:#fff;flex:0 0 46px}
+  .avatar--text{display:grid;place-items:center;font-weight:700;color:var(--primary900);background:#DCE4F1}
+  .wallet-body{padding:0 20px calc(26px + env(safe-area-inset-bottom));margin-top:-58px}
+  .doc{
+    position:relative;border-radius:var(--radius-xl);overflow:hidden;color:#fff;
+    background:linear-gradient(140deg,var(--doc-red-1) 0%,var(--doc-red-2) 100%);
+    box-shadow:var(--shadow-2);padding:14px 16px 12px;
+    aspect-ratio:1.586;min-height:252px;      /* proporcja karty, ale bez przycinania treści */
+    display:flex;flex-direction:column;
+    animation:docIn .5s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes docIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .doc::before{
+    content:"";position:absolute;inset:-60% -10% auto auto;width:70%;height:180%;
+    background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.22) 50%,transparent 60%);
+    transform:rotate(8deg);pointer-events:none;
+  }
+  .doc::after{
+    content:"";position:absolute;right:-22px;bottom:-30px;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(255,255,255,.24),transparent 72%);pointer-events:none;
+  }
+  .doc__top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative}
+  .doc__country{font-size:.68rem;letter-spacing:.14em;font-weight:800;color:rgba(255,255,255,.92)}
+  .doc__type{font-size:1.02rem;font-weight:800;letter-spacing:.02em;margin-top:2px}
+  .doc__flag{width:26px;height:18px;border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.3);flex:0 0 26px}
+  .doc__flag i{display:block;height:50%}
+  .doc__flag i:first-child{background:#fff}
+  .doc__flag i:last-child{background:#DC143C}
+  .doc__main{display:flex;gap:12px;align-items:flex-end;flex:1;position:relative}
+  .doc__photo{width:74px;height:92px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.6);flex:0 0 74px}
+  .doc__fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+  .doc__f .k{font-size:.58rem;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.75);font-weight:700}
+  .doc__f .v{font-size:.84rem;line-height:1.3;font-weight:750;letter-spacing:.01em;overflow-wrap:anywhere}
+  .doc__foot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;position:relative;margin-top:8px}
+  .doc__chip{display:inline-flex;align-items:center;gap:5px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.18);border-radius:99px;padding:3px 8px}
+  .doc__note{font-size:.56rem;line-height:1.3;color:rgba(255,255,255,.8);max-width:52%}
+  .doc.is-locked{justify-content:center;align-items:center;text-align:center;background:linear-gradient(140deg,#243758,#1B2B45);gap:8px}
+
+  /* ---------- arkusz modalny ---------- */
+  .sheet-backdrop{position:absolute;inset:0;background:rgba(16,27,44,.45);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:40}
+  .sheet-backdrop.on{opacity:1;pointer-events:auto}
+  .sheet{
+    position:absolute;left:0;right:0;bottom:0;z-index:41;
+    background:var(--bg);border-radius:24px 24px 0 0;padding:8px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(102%);transition:transform .26s cubic-bezier(.2,.8,.2,1);
+    max-height:88%;overflow-y:auto;box-shadow:0 -12px 40px rgba(16,27,44,.28);
+  }
+  .sheet.on{transform:none}
+  .sheet__grip{width:40px;height:4px;border-radius:99px;background:#C9D3E2;margin:6px auto 12px}
+  .sheet__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .sheet .card{margin-bottom:12px}
+
+  /* ---------- tabbar ---------- */
+  .tabbar{
+    display:flex;gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.92);backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);position:sticky;bottom:0;z-index:30;
+  }
+  .tabbar[hidden]{display:none}
+  .tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:7px 4px;border:0;background:transparent;border-radius:12px;cursor:pointer;
+    font:inherit;font-size:.68rem;font-weight:650;color:var(--text-muted)
+  }
+  .tab[aria-selected=true]{color:var(--primary900);background:#EDF1F8}
+
+  /* ---------- komunikaty ---------- */
+  .alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--radius-md);font-size:.86rem;background:var(--primary100);color:#22314E}
+  .alert--ok{background:var(--ok-bg);color:#0B5A3A}
+  .alert--err{background:var(--err-bg);color:#8C1D18}
+  .alert svg{flex:0 0 18px;margin-top:1px}
+  .toast{
+    position:absolute;left:50%;bottom:96px;transform:translate(-50%,14px);
+    background:#101B2C;color:#fff;padding:11px 16px;border-radius:99px;font-size:.86rem;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:60;max-width:88%;text-align:center
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--ok);font-size:.74rem;font-weight:750;padding:4px 10px;border-radius:99px}
+  .divider{height:1px;background:var(--line);margin:4px 0}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .sr-only-focusable:focus{position:static;width:auto;height:auto;clip:auto;margin:0;padding:8px 12px;background:#fff;border-radius:10px;z-index:100}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+
+  <a href="#main" class="sr sr-only-focusable">Przejdź do treści</a>
+
+  <header class="topbar" id="topbar" hidden>
+    <button class="iconbtn" id="btn-back" type="button" aria-label="Wróć" hidden>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <h1 id="topbar-title"></h1>
+    <button class="iconbtn" id="btn-install-top" type="button" aria-label="Zainstaluj aplikację" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+    </button>
+  </header>
+
+  <main id="main" class="grow" style="display:flex;flex-direction:column">
+
+    <!-- ============ 1. EKRAN POWITALNY ============ -->
+    <section class="view view--flush is-active" id="view-welcome" aria-labelledby="welcome-title">
+      <div class="hero">
+        <div class="brand">
+          <div class="brand__mark">
+            <span class="brand__flag" aria-hidden="true"><i></i><i></i></span>
+            <span>mObywatel</span>
+          </div>
+          <h1 id="welcome-title">Cyfrowy portfel</h1>
+          <p>Twoje dane i zdjęcie — w jednym miejscu, na tym urządzeniu.</p>
+          <ul class="hero__list">
+            <li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#7FA8F0" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg><span><strong>Prywatnie.</strong> Dane nie opuszczają przeglądarki — brak serwera, brak konta, brak wysyłki.</span></li>
+            <li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#7FA8F0" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg><span><strong>Jak aplikacja.</strong> Instalacja na pulpicie jednym kliknięciem, działa też offline.</span></li>
+            <li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#7FA8F0" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span><strong>Wersja poglądowa.</strong> Używa wyłącznie danych, które sam wpiszesz. To nie jest dokument.</span></li>
+          </ul>
+        </div>
+        <div class="hero__cta">
+          <button class="btn btn--block" type="button" id="btn-start">
+            Skonfiguruj aplikację
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14m-6-6l6 6-6 6"/></svg>
+          </button>
+          <button class="btn btn--ghost btn--block" type="button" id="btn-install-hero">Zainstaluj na pulpicie</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. DANE ============ -->
+    <section class="view" id="view-data" aria-labelledby="data-title" hidden>
+      <div class="stack">
+        <div class="progress" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+        <div>
+          <h1 id="data-title">Twoje dane</h1>
+          <p class="muted small" style="margin-top:6px">Potrzebujemy ich, żeby zbudować kartę dokumentu. Wszystko zostaje na tym urządzeniu — nic nie jest wysyłane.</p>
+        </div>
+        <form id="form-data" novalidate autocomplete="off">
+          <div class="stack" style="gap:14px">
+            <p class="section-title">Dane podstawowe</p>
+            <div class="grid2">
+              <div class="field" id="f-imie">
+                <label for="in-imie">Imię</label>
+                <input id="in-imie" name="imie" type="text" autocapitalize="words" autocomplete="given-name" placeholder="Anna" required>
+                <span class="err" id="e-imie"></span>
+              </div>
+              <div class="field" id="f-nazwisko">
+                <label for="in-nazwisko">Nazwisko</label>
+                <input id="in-nazwisko" name="nazwisko" type="text" autocapitalize="words" autocomplete="family-name" placeholder="Kowalska" required>
+                <span class="err" id="e-nazwisko"></span>
+              </div>
+            </div>
+            <div class="field" id="f-pesel">
+              <label for="in-pesel">PESEL</label>
+              <input id="in-pesel" name="pesel" type="text" inputmode="numeric" autocomplete="off" placeholder="11 cyfr" maxlength="11" required aria-describedby="h-pesel">
+              <span class="hint" id="h-pesel">Numer PESEL jest sprawdzany lokalnie (suma kontrolna). Data urodzenia wypełni się sama.</span>
+              <span class="err" id="e-pesel"></span>
+            </div>
+            <div class="grid2">
+              <div class="field" id="f-data">
+                <label for="in-data">Data urodzenia</label>
+                <input id="in-data" name="dataUrodzenia" type="text" readonly placeholder="—" aria-describedby="h-data">
+                <span class="hint" id="h-data">Wyliczone z PESEL</span>
+              </div>
+              <div class="field" id="f-plec">
+                <label for="in-plec">Płeć (z PESEL)</label>
+                <input id="in-plec" name="plec" type="text" readonly placeholder="—">
+                <span class="hint">Cyfra 10. numeru</span>
+              </div>
+            </div>
+            <div class="field" id="f-obywatelstwo">
+              <label for="in-obywatelstwo">Obywatelstwo</label>
+              <input id="in-obywatelstwo" name="obywatelstwo" type="text" value="POLSKIE" autocapitalize="characters" required>
+              <span class="err" id="e-obywatelstwo"></span>
+            </div>
+
+            <p class="section-title">Dane dodatkowe (opcjonalne)</p>
+            <div class="field" id="f-dokument">
+              <label for="in-dokument">Seria i numer dowodu</label>
+              <input id="in-dokument" name="numerDowodu" type="text" placeholder="ABC123456" maxlength="9" autocapitalize="characters" aria-describedby="h-dokument">
+              <span class="hint" id="h-dokument">3 litery + 6 cyfr — zostanie wyświetlone na karcie</span>
+              <span class="err" id="e-dokument"></span>
+            </div>
+            <div class="field" id="f-adres">
+              <label for="in-adres">Adres zameldowania</label>
+              <input id="in-adres" name="adres" type="text" placeholder="ul. Kwiatowa 1, 85-001 Bydgoszcz" autocomplete="street-address">
+            </div>
+          </div>
+        </form>
+        <div class="grow"></div>
+        <div class="alert" id="data-alert" role="status">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>
+          <span>Zapis lokalny w tej przeglądarce. Nikt inny nie ma dostępu do wpisanych danych.</span>
+        </div>
+        <button class="btn btn--block" type="button" id="btn-data-next">Dalej — dodaj zdjęcie</button>
+      </div>
+    </section>
+
+    <!-- ============ 3. ZDJĘCIE ============ -->
+    <section class="view" id="view-photo" aria-labelledby="photo-title" hidden>
+      <div class="stack">
+        <div class="progress" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></div>
+        <div>
+          <h1 id="photo-title">Zdjęcie profilowe</h1>
+          <p class="muted small" style="margin-top:6px">Zrób zdjęcie aparatem lub wybierz plik. Kadr dopasujesz przeciąganiem i suwakiem.</p>
+        </div>
+
+        <div id="photo-pick" class="stack" style="gap:12px">
+          <div class="drop" id="drop" role="button" tabindex="0" aria-label="Wybierz zdjęcie z plików">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#5A6473" stroke-width="1.6" aria-hidden="true" style="margin-bottom:6px"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>
+            <p><strong>Wybierz zdjęcie</strong></p>
+            <p class="small muted">Kliknij, przeciągnij plik tutaj albo wklej ze schowka (Ctrl+V)</p>
+            <p class="tiny soft" style="margin-top:6px">JPG, PNG, HEIC/WebP — przetwarzane lokalnie</p>
+          </div>
+          <input type="file" id="file-input" accept="image/*" class="sr">
+          <button class="btn btn--ghost btn--block" type="button" id="btn-camera">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>
+            Zrób zdjęcie aparatem
+          </button>
+          <div class="card" id="camera-box" hidden>
+            <video id="video" playsinline autoplay muted style="width:100%;border-radius:12px;background:#101B2C;aspect-ratio:3/4;object-fit:cover"></video>
+            <div class="row" style="margin-top:12px;gap:10px">
+              <button class="btn btn--block" type="button" id="btn-shoot">Zrób zdjęcie</button>
+              <button class="btn btn--ghost" type="button" id="btn-camera-off">Anuluj</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="photo-crop" class="stack" style="gap:14px" hidden>
+          <div class="cropper" id="cropper">
+            <img id="crop-img" alt="Podgląd kadrowanego zdjęcia">
+            <div class="ring" aria-hidden="true"></div>
+          </div>
+          <div class="slider">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A6473" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>
+            <input type="range" id="zoom" min="1" max="3" step="0.01" value="1" aria-label="Powiększenie zdjęcia">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A6473" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6"/></svg>
+          </div>
+          <div class="row" style="gap:10px">
+            <button class="btn btn--ghost btn--sm" type="button" id="btn-rot-l" aria-label="Obróć w lewo">⟲ Obróć</button>
+            <button class="btn btn--ghost btn--sm" type="button" id="btn-rot-r" aria-label="Obróć w prawo">⟳ Obróć</button>
+            <button class="btn btn--text btn--sm" type="button" id="btn-change-photo" style="margin-left:auto">Zmień zdjęcie</button>
+          </div>
+          <div class="grow"></div>
+          <button class="btn btn--block" type="button" id="btn-photo-save">Zapisz zdjęcie</button>
+        </div>
+
+        <div class="grow"></div>
+        <button class="btn btn--text btn--block" type="button" id="btn-photo-skip">Pomiń — bez zdjęcia</button>
+      </div>
+    </section>
+
+    <!-- ============ 4. GOTOWE ============ -->
+    <section class="view" id="view-done" aria-labelledby="done-title" hidden>
+      <div class="stack">
+        <div class="progress" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <div class="center" style="padding-top:6px">
+          <div style="width:66px;height:66px;border-radius:50%;background:var(--ok-bg);display:grid;place-items:center;margin:0 auto 14px">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0F7B4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h1 id="done-title">Gotowe</h1>
+          <p class="muted small" style="margin-top:6px">Karta poglądowa została utworzona i zapisana w tym urządzeniu.</p>
+        </div>
+        <div id="done-card-slot"></div>
+        <div class="card" id="install-card">
+          <div class="row row--between wrap">
+            <div>
+              <h3>Ustaw jako aplikację</h3>
+              <p class="small muted" id="install-hint">Dodaj skrót na pulpit — okno bez paska adresu, działa offline.</p>
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px;gap:10px">
+            <button class="btn btn--block btn--sm" type="button" id="btn-install">Zainstaluj</button>
+            <button class="btn btn--ghost btn--sm" type="button" id="btn-install-help">Jak to zrobić?</button>
+          </div>
+        </div>
+        <div class="grow"></div>
+        <button class="btn btn--block" type="button" id="btn-open-wallet">Otwórz portfel</button>
+      </div>
+    </section>
+
+    <!-- ============ 5. PORTFEL ============ -->
+    <section class="view view--flush" id="view-wallet" aria-labelledby="wallet-title" hidden>
+      <div class="wallet-head">
+        <div class="row">
+          <img class="avatar" id="wallet-avatar" alt="" hidden>
+          <div class="avatar avatar--text" id="wallet-avatar-fallback" aria-hidden="true">?</div>
+          <div style="flex:1;min-width:0">
+            <p class="tiny" style="color:#AFC0DA;letter-spacing:.06em;text-transform:uppercase;font-weight:700">Portfel</p>
+            <h1 id="wallet-title" style="font-size:1.16rem;font-weight:700">Dzień dobry</h1>
+          </div>
+          <button class="iconbtn" type="button" id="btn-open-settings" aria-label="Ustawienia" style="color:#fff">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2V21a2 2 0 11-4 0v-.1A1.7 1.7 0 007 19.4a1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.7 1.7 0 002.6 14H2.5a2 2 0 110-4h.1A1.7 1.7 0 004.6 7a1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1A1.7 1.7 0 0010 2.6V2.5a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1A1.7 1.7 0 0021.4 10h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="wallet-body">
+        <div id="wallet-card-slot"></div>
+        <div style="margin-top:16px" class="stack" id="wallet-sections"></div>
+        <p class="tiny soft center" style="margin:18px 0 0">
+          Wersja poglądowa — karta nie jest dokumentem tożsamości i nie służy do okazywania.
+        </p>
+      </div>
+    </section>
+
+  <section class="view view--scroll" id="view-settings" aria-labelledby="settings-title" hidden>
+    <div class="stack">
+      <div>
+        <h1 id="settings-title">Ustawienia</h1>
+        <p class="muted small" style="margin-top:6px">Dane, instalacja i informacje o projekcie.</p>
+      </div>
+
+      <div class="card card--flush" id="settings-install">
+        <div class="card__title"><h3>Instalacja na pulpicie</h3></div>
+        <div class="info-row" style="display:block">
+          <p class="small muted" id="install-state">Sprawdzanie…</p>
+          <div class="row" style="margin-top:12px;gap:10px">
+            <button class="btn btn--sm" type="button" id="btn-install-2">Zainstaluj</button>
+            <button class="btn btn--ghost btn--sm" type="button" id="btn-install-help-2">Instrukcja</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card--flush">
+        <div class="card__title"><h3>Dane na tym urządzeniu</h3></div>
+        <div class="info-row"><span class="k">Wpisane dane</span><span class="v" id="stat-data">brak</span></div>
+        <div class="info-row"><span class="k">Zdjęcie</span><span class="v" id="stat-photo">brak</span></div>
+        <div class="info-row"><span class="k">Miejsce zapisu</span><span class="v">localStorage</span></div>
+        <div class="info-row" style="display:block">
+          <div class="row wrap" style="gap:10px">
+            <button class="btn btn--ghost btn--sm" type="button" id="btn-export">Eksportuj kopię (JSON)</button>
+            <button class="btn btn--ghost btn--sm" type="button" id="btn-import">Wczytaj kopię</button>
+            <button class="btn btn--danger btn--sm" type="button" id="btn-wipe">Usuń wszystkie dane</button>
+          </div>
+          <input type="file" id="import-input" accept="application/json,.json" class="sr">
+        </div>
+      </div>
+
+      <div class="card card--flush">
+        <div class="card__title"><h3>Informacje</h3></div>
+        <div class="info-row" style="display:block">
+          <p class="small">Niezależny projekt edukacyjny. <strong>Nie jest to oficjalna aplikacja mObywatel</strong> i nie ma z nią związku — nie łączy się z żadnym systemem państwowym, nie weryfikuje danych i nie służy do okazywania dokumentów.</p>
+          <div class="divider"></div>
+          <p class="small muted">Paleta i komponenty wzorowane na design systemie mObywatela udostępnionym publicznie przez Ministerstwo Cyfryzacji 29.12.2025 (licencja MIT, <span style="overflow-wrap:anywhere">github.com/fajfer/mObywatel</span>). Wykorzystano wyłącznie publiczne kolory marki (granat #1B2B45, akcent #CC2430); żadne pliki graficzne rządu nie są tu używane.</p>
+          <div class="divider"></div>
+          <p class="small muted">Prywatność: 100% działania lokalnie. Brak sieci, brak analityki, brak plików cookie. Dane znikają po wyczyszczeniu danych przeglądarki — zrób kopię, jeśli są dla Ciebie ważne.</p>
+        </div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+  </section>
+  </main>
+
+  <!-- ============ TABBAR ============ -->
+  <nav class="tabbar" id="tabbar" aria-label="Nawigacja główna" hidden>
+    <button class="tab" type="button" data-view="view-wallet" aria-selected="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/></svg>
+      Portfel
+    </button>
+    <button class="tab" type="button" data-view="view-data" aria-selected="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0113 0"/></svg>
+      Moje dane
+    </button>
+    <button class="tab" type="button" data-view="view-settings" aria-selected="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.8 2.8M15.2 15.2L18 18M18 6l-2.8 2.8M8.8 15.2L6 18"/></svg>
+      Ustawienia
+    </button>
+  </nav>
+
+
+  <div class="sheet-backdrop" id="backdrop"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <div class="sheet__grip"></div>
+    <div class="sheet__head">
+      <h2 id="sheet-title">Szczegóły</h2>
+      <button class="iconbtn" type="button" id="btn-sheet-close" aria-label="Zamknij">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="sheet-body"></div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================================
+   mObywatel — wersja web (kopia poglądowa)
+   100% lokalnie: brak sieci, brak analityki. Dane w localStorage.
+   ========================================================================= */
+(function () {
+  var KEY = "mobywatel.web.v1";
+  var PHOTO_KEY = "mobywatel.web.photo.v1";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  var state = {
+    view: "view-welcome",
+    person: null,
+    photo: null,       // dataURL 512x512 JPEG
+    history: [],
+    deferredPrompt: null
+  };
+
+  /* ------------------------------------------------------------------ utils */
+  function toast(msg, ms) {
+    var t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("on"); }, ms || 2600);
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function store(key, val) {
+    try {
+      if (val === undefined) { return localStorage.getItem(key); }
+      if (val === null) { localStorage.removeItem(key); return true; }
+      localStorage.setItem(key, val); return true;
+    } catch (e) { return null; }
+  }
+  function safeParse(str) { try { return str ? JSON.parse(str) : null; } catch (e) { return null; } }
+
+  /* --------------------------------------------------------------- PESEL */
+  function peselInfo(p) {
+    if (!/^\d{11}$/.test(p)) { return { valid: false, reason: "PESEL musi mieć 11 cyfr." }; }
+    var w = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
+    var sum = 0;
+    for (var i = 0; i < 10; i++) { sum += parseInt(p.charAt(i), 10) * w[i]; }
+    if ((10 - (sum % 10)) % 10 !== parseInt(p.charAt(10), 10)) {
+      return { valid: false, reason: "Nieprawidłowa suma kontrolna. Sprawdź numer." };
+    }
+    var y = parseInt(p.substr(0, 2), 10);
+    var m = parseInt(p.substr(2, 2), 10);
+    var d = parseInt(p.substr(4, 2), 10);
+    var century;
+    if (m >= 1 && m <= 12) { century = 1900; }
+    else if (m >= 21 && m <= 32) { century = 2000; m -= 20; }
+    else if (m >= 41 && m <= 52) { century = 2100; m -= 40; }
+    else if (m >= 61 && m <= 72) { century = 2200; m -= 60; }
+    else if (m >= 81 && m <= 92) { century = 1800; m -= 80; }
+    else { return { valid: false, reason: "Nieprawidłowy miesiąc w numerze PESEL." }; }
+    var year = century + y;
+    var date = new Date(Date.UTC(year, m - 1, d));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) {
+      return { valid: false, reason: "Nieprawidłowa data urodzenia w numerze PESEL." };
+    }
+    return {
+      valid: true,
+      birth: ("0" + d).slice(-2) + "." + ("0" + m).slice(-2) + "." + year,
+      iso: year + "-" + ("0" + m).slice(-2) + "-" + ("0" + d).slice(-2),
+      sex: parseInt(p.charAt(9), 10) % 2 === 0 ? "KOBIETA" : "MĘŻCZYZNA"
+    };
+  }
+
+  /* ------------------------------------------------------------ walidacja */
+  var NAME_RE = /^[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż][A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż '\-. ]{1,49}$/;
+  function setFieldError(id, msg) {
+    var f = $("#f-" + id), e = $("#e-" + id);
+    if (!f) { return; }
+    if (msg) { f.classList.add("has-error"); f.classList.remove("ok"); if (e) { e.textContent = msg; } }
+    else { f.classList.remove("has-error"); if (e) { e.textContent = ""; } }
+  }
+  function markOk(id, ok) {
+    var f = $("#f-" + id);
+    if (!f) { return; }
+    f.classList.toggle("ok", !!ok);
+  }
+
+  function readForm() {
+    return {
+      imie: $("#in-imie").value.trim(),
+      nazwisko: $("#in-nazwisko").value.trim(),
+      pesel: $("#in-pesel").value.replace(/\D/g, ""),
+      dataUrodzenia: $("#in-data").value,
+      plec: $("#in-plec").value,
+      obywatelstwo: ($("#in-obywatelstwo").value || "POLSKIE").trim().toUpperCase(),
+      numerDowodu: $("#in-dokument").value.trim().toUpperCase(),
+      adres: $("#in-adres").value.trim()
+    };
+  }
+  function titleCase(v) {
+    return v.toLocaleLowerCase("pl-PL").replace(/(^|[\s\-'])([a-ząćęłńóśźż])/g, function (m, a, b) { return a + b.toLocaleUpperCase("pl-PL"); });
+  }
+  function validate(showErrors) {
+    var d = readForm(), ok = true, firstBad = null;
+    function bad(id, msg) { ok = false; if (!firstBad) { firstBad = id; } if (showErrors) { setFieldError(id, msg); } }
+
+    if (!d.imie) { bad("imie", "Podaj imię."); }
+    else if (!NAME_RE.test(d.imie)) { bad("imie", "Imię może zawierać tylko litery, spację i myślnik."); }
+    else { setFieldError("imie", ""); markOk("imie", true); }
+
+    if (!d.nazwisko) { bad("nazwisko", "Podaj nazwisko."); }
+    else if (!NAME_RE.test(d.nazwisko)) { bad("nazwisko", "Nazwisko może zawierać tylko litery, spację i myślnik."); }
+    else { setFieldError("nazwisko", ""); markOk("nazwisko", true); }
+
+    var pi = peselInfo(d.pesel);
+    if (!d.pesel) { bad("pesel", "Podaj numer PESEL."); }
+    else if (!pi.valid) { bad("pesel", pi.reason); }
+    else { setFieldError("pesel", ""); markOk("pesel", true); }
+
+    if (!d.obywatelstwo) { bad("obywatelstwo", "Podaj obywatelstwo."); }
+    else { setFieldError("obywatelstwo", ""); markOk("obywatelstwo", true); }
+
+    if (d.numerDowodu && !/^[A-Z]{3}\d{6}$/.test(d.numerDowodu)) {
+      bad("dokument", "Format: 3 litery i 6 cyfr, np. ABC123456.");
+    } else { setFieldError("dokument", ""); }
+
+    if (!ok && showErrors && firstBad) {
+      var el = $("#in-" + firstBad);
+      if (el) {
+        try {
+          el.focus({ preventScroll: true });
+          if (typeof el.scrollIntoView === "function") { el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        } catch (err) { /* focus/scroll to tylko wygoda */ }
+      }
+    }
+    return { ok: ok, data: d, pesel: pi };
+  }
+
+  /* ----------------------------------------------------------- routing/ui */
+  var TITLES = {
+    "view-welcome": "",
+    "view-data": "Moje dane",
+    "view-photo": "Zdjęcie",
+    "view-done": "Gotowe",
+    "view-wallet": "Portfel",
+    "view-settings": "Ustawienia"
+  };
+  var hasWallet = false;
+
+  function showView(id, opts) {
+    opts = opts || {};
+    if (id !== state.view) {
+      if (!opts.replace) { state.history.push(state.view); }
+    }
+    state.view = id;
+    $$(".view").forEach(function (v) {
+      var on = v.id === id;
+      v.hidden = !on;
+      v.classList.toggle("is-active", on);
+    });
+    var tb = $("#topbar");
+    var isWallet = id === "view-wallet";
+    tb.hidden = id === "view-welcome";
+    tb.classList.toggle("is-navy", isWallet);
+    $("#topbar-title").textContent = TITLES[id] || "";
+    $("#btn-back").hidden = !state.history.length || id === "view-wallet";
+    $("#tabbar").hidden = !hasWallet || !(id === "view-wallet" || id === "view-data" || id === "view-settings");
+    $$(".tab").forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === id)); });
+    try { window.scrollTo(0, 0); } catch (err) { /* ignorowane */ }
+    var sv = $("#view-settings");
+    if (sv) { sv.scrollTop = 0; }
+    if (id === "view-settings") { renderSettings(); }
+  }
+  function goBack() {
+    var prev = state.history.pop() || (hasWallet ? "view-wallet" : "view-data");
+    showView(prev, { replace: true });
+  }
+
+  /* --------------------------------------------------------- karta dokumentu */
+  function docMarkup(cls) {
+    var p = state.person || {};
+    var photo = state.photo
+      ? '<img class="doc__photo" src="' + state.photo + '" alt="Zdjęcie profilowe">'
+      : '<div class="doc__photo" aria-hidden="true"></div>';
+    var numer = p.numerDowodu
+      ? '<div class="doc__f"><p class="k">Numer</p><p class="v">' + esc(p.numerDowodu) + "</p></div>"
+      : "";
+    return '' +
+      '<article class="doc ' + (cls || "") + '" id="doc-card" aria-label="Karta dokumentu (wersja poglądowa)">' +
+        '<div class="doc__top">' +
+          '<div>' +
+            '<p class="doc__country">RZECZPOSPOLITA POLSKA</p>' +
+            '<p class="doc__type">mDowód</p>' +
+          "</div>" +
+          '<div class="doc__flag" aria-hidden="true"><i></i><i></i></div>' +
+        "</div>" +
+        '<div class="doc__main">' +
+          photo +
+          '<div class="doc__fields">' +
+            '<div class="doc__f"><p class="k">Imię i nazwisko</p><p class="v">' + esc((p.imie + " " + p.nazwisko).toUpperCase()) + "</p></div>" +
+            '<div class="doc__f"><p class="k">Obywatelstwo</p><p class="v">' + esc(p.obywatelstwo || "POLSKIE") + "</p></div>" +
+            '<div class="doc__f"><p class="k">Data urodzenia</p><p class="v">' + esc(p.dataUrodzenia || "—") + "</p></div>" +
+            '<div class="doc__f"><p class="k">Numer PESEL</p><p class="v">' + esc(p.pesel || "—") + "</p></div>" +
+            numer +
+          "</div>" +
+        "</div>" +
+        '<div class="doc__foot">' +
+          '<span class="doc__chip">Kopia poglądowa</span>' +
+          '<span class="doc__note">Nie jest dokumentem tożsamości.</span>' +
+        "</div>" +
+      "</article>";
+  }
+  function renderCard(slot) {
+    if (!state.person) { return; }
+    slot.innerHTML = docMarkup("") +
+      '<div class="row" style="margin-top:14px;gap:10px">' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-act="sheet-doc" style="flex:1">Szczegóły</button>' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-act="edit-photo" style="flex:1">Zmień zdjęcie</button>' +
+      "</div>";
+  }
+
+  /* ------------------------------------------------------------- portfel */
+  function renderWallet() {
+    var p = state.person;
+    if (!p) { return; }
+    $("#wallet-title").textContent = "Dzień dobry, " + titleCase(p.imie);
+    var av = $("#wallet-avatar"), fb = $("#wallet-avatar-fallback");
+    if (state.photo) {
+      av.src = state.photo; av.hidden = false; fb.hidden = true; av.alt = "Zdjęcie profilowe";
+    } else {
+      av.hidden = true; fb.hidden = false;
+      fb.textContent = (p.imie.charAt(0) + p.nazwisko.charAt(0)).toUpperCase();
+    }
+    renderCard($("#wallet-card-slot"));
+
+    var rows = [
+      ["Imię i nazwisko", titleCase(p.imie) + " " + titleCase(p.nazwisko)],
+      ["PESEL", p.pesel],
+      ["Data urodzenia", p.dataUrodzenia || "—"],
+      ["Płeć (z PESEL)", p.plec || "—"],
+      ["Obywatelstwo", p.obywatelstwo || "POLSKIE"]
+    ];
+    if (p.numerDowodu) { rows.push(["Seria i numer dowodu", p.numerDowodu]); }
+    if (p.adres) { rows.push(["Adres", p.adres]); }
+
+    $("#wallet-sections").innerHTML =
+      '<div class="card card--flush">' +
+        '<div class="card__title"><h3>Dane osobowe</h3></div>' +
+        rows.map(function (r) {
+          return '<div class="info-row"><span class="k">' + esc(r[0]) + '</span><span class="v">' + esc(r[1]) + "</span></div>";
+        }).join("") +
+      "</div>" +
+      '<div class="card card--flush">' +
+        '<div class="card__title"><h3>Bezpieczeństwo</h3></div>' +
+        '<div class="info-row" style="display:block">' +
+          '<p class="small muted">Dane zapisano wyłącznie w tej przeglądarce (localStorage). Nic nie jest wysyłane do internetu.</p>' +
+          '<div class="row" style="margin-top:12px;gap:10px">' +
+            '<button class="btn btn--ghost btn--sm" type="button" data-act="go-settings">Ustawienia i kopia</button>' +
+          "</div>" +
+        "</div>" +
+      "</div>";
+  }
+
+  /* -------------------------------------------------------------- sheet */
+  function openSheet(title, html) {
+    $("#sheet-title").textContent = title;
+    $("#sheet-body").innerHTML = html;
+    $("#sheet").hidden = false;
+    requestAnimationFrame(function () {
+      $("#sheet").classList.add("on");
+      $("#backdrop").classList.add("on");
+    });
+    $("#btn-sheet-close").focus();
+  }
+  function closeSheet() {
+    $("#sheet").classList.remove("on");
+    $("#backdrop").classList.remove("on");
+    setTimeout(function () { $("#sheet").hidden = true; }, 240);
+  }
+  function installHelpHtml() {
+    return '<div class="card"><h3>Instalacja — krok po kroku</h3>' +
+      '<p class="small muted" style="margin-top:8px"><strong>Chrome / Edge (Windows, macOS, Linux):</strong> kliknij ikonę „Zainstaluj” w pasku adresu (⊕ / ekran z minusem) lub menu ⋮ → <em>Zainstaluj mObywatel…</em>. Skrót pojawi się na pulpicie i w menu Start.</p>' +
+      '<div class="divider"></div>' +
+      '<p class="small muted"><strong>Safari (macOS 14+):</strong> menu <em>Plik → Dodaj do Docka</em>.</p>' +
+      '<div class="divider"></div>' +
+      '<p class="small muted"><strong>Telefon / tablet:</strong> Android — menu ⋮ → <em>Dodaj do ekranu głównego</em>; iPhone — Udostępnij → <em>Dodaj do ekranu początkowego</em>.</p>' +
+      '<div class="divider"></div>' +
+      '<p class="small muted">Wymaga otwarcia przez <strong>http://localhost</strong> albo <strong>https://</strong> — instalacja PWA nie działa z pliku <em>file://</em>. Instrukcja serwera lokalnego jest w README projektu.</p></div>';
+  }
+
+  /* ---------------------------------------------------------------- photo */
+  var crop = {
+    img: null,          // HTMLImageElement
+    naturalW: 0, naturalH: 0,
+    rotation: 0,        // 0/90/180/270
+    zoom: 1,
+    minZoom: 1,
+    base: { w: 0, h: 0 }, // rozmiar po obrocie w skali 1 (cover boxu)
+    x: 0, y: 0,
+    box: 300
+  };
+
+  function cropperBox() {
+    var el = $("#cropper");
+    return el ? el.clientWidth : 300;
+  }
+  /* Jedno źródło prawdy dla kadrowania: rozmiary, skala i transformacje.
+     Obrót odbywa się wokół środka obrazu, a skala zawsze pokrywa cały kwadrat
+     (cover) — dzięki temu podgląd i zapisany plik są identyczne. */
+  function cropMetrics() {
+    var img = crop.img, box = crop.box;
+    var rot = ((crop.rotation % 360) + 360) % 360;
+    var iw = img.naturalWidth, ih = img.naturalHeight;
+    var swap = rot % 180 !== 0;
+    var rw = swap ? ih : iw, rh = swap ? iw : ih;      // wymiary po obrocie
+    var s0 = Math.max(box / rw, box / rh);             // skala "cover"
+    var s = s0 * crop.zoom;
+    return { rot: rot, iw: iw, ih: ih, s0: s0, s: s, bw: rw * s, bh: rh * s };
+  }
+  function clampCrop() {
+    if (!crop.img) { return; }
+    var m = cropMetrics();
+    crop.x = Math.min(0, Math.max(crop.box - m.bw, crop.x));
+    crop.y = Math.min(0, Math.max(crop.box - m.bh, crop.y));
+  }
+  function drawCrop() {
+    if (!crop.img) { return; }
+    var im = $("#crop-img"), m = cropMetrics();
+    var tx = crop.box / 2 + crop.x - m.iw / 2;
+    var ty = crop.box / 2 + crop.y - m.ih / 2;
+    im.style.width = m.iw + "px";
+    im.style.height = m.ih + "px";
+    im.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + m.rot + "deg) scale(" + m.s + ")";
+  }
+  function layoutCropFit() {
+    if (!crop.img) { return; }
+    crop.box = cropperBox();
+    crop.zoom = Math.min(3, Math.max(1, crop.zoom));
+    clampCrop();
+    drawCrop();
+  }
+  function loadImageFromFile(file) {
+    if (!file || !/^image\//.test(file.type)) { toast("To nie jest plik obrazu."); return; }
+    if (file.size > 25 * 1024 * 1024) { toast("Plik jest za duży (limit 25 MB)."); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      showCropper(img, url);
+    };
+    img.onerror = function () { toast("Nie udało się wczytać zdjęcia."); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  function showCropper(img, keepUrl) {
+    if (crop._url && crop._url !== keepUrl) { URL.revokeObjectURL(crop._url); }
+    crop._url = keepUrl || null;
+    crop.img = img;
+    crop.rotation = 0;
+    crop.zoom = 1;
+    crop.x = 0; crop.y = 0;
+    $("#crop-img").src = keepUrl || img.src;
+    $("#zoom").value = "1";
+    $("#photo-pick").hidden = true;
+    $("#photo-crop").hidden = false;
+    requestAnimationFrame(layoutCropFit);
+  }
+  function exportCropped(size) {
+    size = size || 512;
+    if (!crop.img) { return null; }
+    var m = cropMetrics();
+    var k = size / crop.box;                            // skala: podgląd → eksport
+    var c = document.createElement("canvas");
+    c.width = size; c.height = size;
+    var ctx = c.getContext("2d");
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, size, size);
+    ctx.save();
+    ctx.scale(k, k);
+    ctx.translate(crop.box / 2 + crop.x, crop.box / 2 + crop.y);
+    ctx.rotate(m.rot * Math.PI / 180);
+    if ("imageSmoothingQuality" in ctx) { ctx.imageSmoothingQuality = "high"; }
+    ctx.drawImage(crop.img, -m.iw * m.s / 2, -m.ih * m.s / 2, m.iw * m.s, m.ih * m.s);
+    ctx.restore();
+    return c.toDataURL("image/jpeg", 0.86);
+  }
+
+  /* --------------------------------------------------------- persystencja */
+  function save() {
+    var ok1 = store(KEY, JSON.stringify(state.person || {}));
+    var ok2 = state.photo ? store(PHOTO_KEY, state.photo) : (store(PHOTO_KEY, null), true);
+    if (ok1 === null || ok2 === null) {
+      toast("Brak miejsca w pamięci przeglądarki — dane mogły się nie zapisać.", 5000);
+      return false;
+    }
+    return true;
+  }
+  function load() {
+    var p = safeParse(store(KEY));
+    if (p && p.pesel) { state.person = p; }
+    var ph = store(PHOTO_KEY);
+    if (ph && /^data:image\//.test(ph)) { state.photo = ph; }
+    return !!state.person;
+  }
+  function wipe() {
+    store(KEY, null); store(PHOTO_KEY, null);
+    state.person = null; state.photo = null; state.history = [];
+    hasWallet = false;
+    clearForm();
+    $("#photo-pick").hidden = false;
+    $("#photo-crop").hidden = true;
+    $("#crop-img").src = "";
+    crop.img = null;
+    updateDataViewMode();
+    showView("view-welcome", { replace: true });
+    toast("Wszystkie dane zostały usunięte.");
+  }
+  function clearForm() {
+    ["#in-imie", "#in-nazwisko", "#in-pesel", "#in-dokument", "#in-adres"].forEach(function (s) { $(s).value = ""; });
+    $("#in-data").value = ""; $("#in-plec").value = "";
+    $("#in-obywatelstwo").value = "POLSKIE";
+    ["imie", "nazwisko", "pesel", "obywatelstwo", "dokument"].forEach(function (id) { setFieldError(id, ""); markOk(id, false); });
+  }
+  function renderSettings() {
+    var installCard = $("#settings-install");
+    var p = state.person;
+    $("#stat-data").textContent = p ? "tak (" + p.imie + " " + p.nazwisko + ")" : "brak";
+    $("#stat-photo").textContent = state.photo ? "tak (512×512 JPEG)" : "brak";
+    $("#install-state").textContent = isStandalone()
+      ? "Aplikacja działa w trybie zainstalowanym."
+      : (state.deferredPrompt ? "Gotowe do instalacji — kliknij „Zainstaluj”." : "Otwórz przez http://localhost lub https://, aby móc zainstalować.");
+    $("#btn-install-2").disabled = isStandalone();
+    $("#btn-wipe").disabled = !p && !state.photo;
+    void installCard;
+  }
+  function isStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: minimal-ui)").matches ||
+      window.navigator.standalone === true;
+  }
+
+  /* ------------------------------------------------------------- instalacja */
+  function refreshInstallUI() {
+    var can = !!state.deferredPrompt && !isStandalone();
+    $("#btn-install").disabled = !can;
+    $("#btn-install-top").hidden = !can;
+    $("#btn-install-hero").textContent = isStandalone() ? "Zainstalowano jako aplikację" : "Zainstaluj na pulpicie";
+    $("#btn-install-hero").disabled = isStandalone();
+    $("#install-hint").textContent = isStandalone()
+      ? "Aplikacja jest już zainstalowana. Uruchomisz ją z menu Start / Docka."
+      : (can ? "Kliknij „Zainstaluj” — skrót pojawi się na pulpicie." : "Przeglądarka nie oferuje teraz automatycznej instalacji — użyj instrukcji obok.");
+    if ($("#view-settings").classList.contains("is-active")) { renderSettings(); }
+  }
+  function promptInstall() {
+    if (!state.deferredPrompt) { openSheet("Instalacja", installHelpHtml()); return; }
+    state.deferredPrompt.prompt();
+    state.deferredPrompt.userChoice.then(function (r) {
+      if (r && r.outcome === "accepted") { toast("Instalowanie… sprawdź pulpit."); }
+      state.deferredPrompt = null;
+      refreshInstallUI();
+    }).catch(function () { state.deferredPrompt = null; refreshInstallUI(); });
+  }
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); state.deferredPrompt = e; refreshInstallUI(); });
+  window.addEventListener("appinstalled", function () { state.deferredPrompt = null; refreshInstallUI(); toast("Aplikacja zainstalowana."); });
+
+  /* ---------------------------------------------------------------- eventy */
+  // start / nawigacja
+  $("#btn-start").addEventListener("click", function () {
+    if (state.person) {
+      fillForm(state.person);
+      showView("view-wallet");
+    } else {
+      showView("view-data");
+      setTimeout(function () { $("#in-imie").focus(); }, 260);
+    }
+  });
+  $("#btn-back").addEventListener("click", goBack);
+  $$(".tab").forEach(function (t) {
+    t.addEventListener("click", function () { showView(t.dataset.view); });
+  });
+  $("#btn-open-settings").addEventListener("click", function () { showView("view-settings"); });
+  $("#btn-sheet-close").addEventListener("click", closeSheet);
+  $("#backdrop").addEventListener("click", closeSheet);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if ($("#sheet").classList.contains("on")) { closeSheet(); }
+      else if (state.view === "view-photo") {
+        if (hasWallet) { renderWallet(); showView("view-wallet"); }
+        else { $("#btn-change-photo").click(); showView("view-data"); }
+      } else if (state.view === "view-done" || state.view === "view-data" || state.view === "view-settings") { goBack(); }
+      else if (state.view === "view-wallet" && $("#btn-export")) { /* brak akcji */ }
+    }
+  });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-act]");
+    if (!b) { return; }
+    var act = b.dataset.act;
+    if (act === "sheet-doc") {
+      var p = state.person || {};
+      openSheet("Szczegóły karty", '<div class="card card--flush">' +
+        '<div class="info-row"><span class="k">Rodzaj</span><span class="v">mDowód (kopia poglądowa)</span></div>' +
+        '<div class="info-row"><span class="k">Wystawca</span><span class="v">brak — projekt hobbystyczny</span></div>' +
+        '<div class="info-row"><span class="k">Imię i nazwisko</span><span class="v">' + esc(titleCase(p.imie || "") + " " + titleCase(p.nazwisko || "")) + "</span></div>" +
+        '<div class="info-row"><span class="k">PESEL</span><span class="v">' + esc(p.pesel || "—") + "</span></div>" +
+        '<div class="info-row"><span class="k">Data urodzenia</span><span class="v">' + esc(p.dataUrodzenia || "—") + "</span></div>" +
+        '<div class="info-row"><span class="k">Utworzono</span><span class="v">' + esc((state.person && state.person.utworzono) || "—") + "</span></div>" +
+        "</div>" +
+        '<div class="alert" style="margin-bottom:12px">Karta służy wyłącznie do celów prywatnych/poglądowych.</div>' +
+        '<button class="btn btn--ghost btn--block" type="button" data-act="close-sheet">Zamknij</button>');
+    } else if (act === "close-sheet") { closeSheet(); }
+    else if (act === "edit-photo") { closeSheet(); startPhotoEdit(); }
+    else if (act === "go-settings") { showView("view-settings"); }
+  });
+
+  function fillForm(p) {
+    $("#in-imie").value = p.imie || "";
+    $("#in-nazwisko").value = p.nazwisko || "";
+    $("#in-pesel").value = p.pesel || "";
+    $("#in-data").value = p.dataUrodzenia || "";
+    $("#in-plec").value = p.plec || "";
+    $("#in-obywatelstwo").value = p.obywatelstwo || "POLSKIE";
+    $("#in-dokument").value = p.numerDowodu || "";
+    $("#in-adres").value = p.adres || "";
+  }
+
+  var ALERT_INFO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg><span>Zapis lokalny w tej przeglądarce. Nikt inny nie ma dostępu do wpisanych danych.</span>';
+  function setDataAlert(kind, msg) {
+    var el = $("#data-alert");
+    if (kind === "ok") {
+      el.className = "alert alert--ok";
+      el.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>' + esc(msg) + "</span>";
+    } else if (kind === "err") {
+      el.className = "alert alert--err";
+      el.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg><span>' + esc(msg) + "</span>";
+    } else {
+      el.className = "alert";
+      el.innerHTML = ALERT_INFO;
+    }
+  }
+  function updateDataViewMode() {
+    var editing = hasWallet;
+    $("#view-data").querySelector(".progress").hidden = editing;
+    $("#btn-data-next").textContent = editing ? "Zapisz zmiany" : "Dalej — dodaj zdjęcie";
+    $("#btn-data-next").innerHTML = editing
+      ? "Zapisz zmiany"
+      : 'Dalej — dodaj zdjęcie<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14m-6-6l6 6-6 6"/></svg>';
+    var t = $("#data-title"), sub = $("#view-data").querySelector(".muted.small");
+    if (t) { t.textContent = editing ? "Moje dane" : "Twoje dane"; }
+    if (sub) {
+      sub.textContent = editing
+        ? "Popraw dane i zapisz — karta w portfelu zaktualizuje się od razu. Wszystko zostaje na tym urządzeniu."
+        : "Potrzebujemy ich, żeby zbudować kartę dokumentu. Wszystko zostaje na tym urządzeniu — nic nie jest wysyłane.";
+    }
+  }
+
+  // formularz: walidacja na żywo + PESEL
+  function onPeselInput() {
+    var el = $("#in-pesel");
+    el.value = el.value.replace(/\D/g, "").slice(0, 11);
+    if (el.value.length === 11) {
+      var r = peselInfo(el.value);
+      if (r.valid) {
+        $("#in-data").value = r.birth;
+        $("#in-plec").value = r.sex;
+        setFieldError("pesel", ""); markOk("pesel", true);
+        setDataAlert("ok", "PESEL poprawny — data urodzenia i płeć zostały odczytane lokalnie.");
+      } else {
+        setFieldError("pesel", r.reason); markOk("pesel", false);
+        $("#in-data").value = ""; $("#in-plec").value = "";
+        setDataAlert("err", "PESEL nie przeszedł sprawdzenia sumy kontrolnej.");
+      }
+    } else {
+      $("#in-data").value = ""; $("#in-plec").value = "";
+      setFieldError("pesel", ""); markOk("pesel", false);
+      setDataAlert("info");
+    }
+  }
+  $("#form-data").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("#btn-data-next").click();
+  });
+  $("#in-pesel").addEventListener("input", onPeselInput);
+  $("#in-pesel").addEventListener("blur", onPeselInput);
+  ["imie", "nazwisko"].forEach(function (k) {
+    $("#in-" + k).addEventListener("blur", function () { validate(true); });
+  });
+  $("#in-dokument").addEventListener("input", function () {
+    var el = $("#in-dokument");
+    el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 9);
+  });
+  $("#in-obywatelstwo").addEventListener("blur", function () {
+    var el = $("#in-obywatelstwo");
+    el.value = el.value.trim().toUpperCase() || "POLSKIE";
+  });
+
+  $("#btn-data-next").addEventListener("click", function () {
+    var v = validate(true);
+    if (!v.ok) { toast("Uzupełnij zaznaczone pola."); return; }
+    var d = v.data;
+    state.person = state.person || {};
+    state.person = {
+      imie: d.imie, nazwisko: d.nazwisko, pesel: d.pesel,
+      dataUrodzenia: d.dataUrodzenia, plec: d.plec, obywatelstwo: d.obywatelstwo,
+      numerDowodu: d.numerDowodu, adres: d.adres,
+      utworzono: (state.person && state.person.utworzono) || new Date().toLocaleDateString("pl-PL")
+    };
+    save();
+    if (hasWallet) {
+      renderWallet();
+      showView("view-wallet");
+      toast("Dane zaktualizowane.");
+      return;
+    }
+    if (state.photo) { finishOnboarding(); } else { showView("view-photo"); }
+  });
+
+  // zdjęcie
+  $("#drop").addEventListener("click", function () { $("#file-input").click(); });
+  $("#drop").addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#file-input").click(); } });
+  $("#file-input").addEventListener("change", function (e) { if (e.target.files && e.target.files[0]) { loadImageFromFile(e.target.files[0]); } e.target.value = ""; });
+  ["dragenter", "dragover"].forEach(function (ev) {
+    $("#drop").addEventListener(ev, function (e) { e.preventDefault(); $("#drop").classList.add("is-over"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    $("#drop").addEventListener(ev, function (e) { e.preventDefault(); $("#drop").classList.remove("is-over"); });
+  });
+  $("#drop").addEventListener("drop", function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) { loadImageFromFile(f); }
+  });
+  document.addEventListener("paste", function (e) {
+    if (!$("#photo-pick").hidden || !$("#photo-crop").hidden) {
+      var items = (e.clipboardData && e.clipboardData.items) || [];
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type && /^image\//.test(items[i].type)) {
+          loadImageFromFile(items[i].getAsFile());
+          break;
+        }
+      }
+    }
+  });
+
+  // aparat
+  var stream = null;
+  $("#btn-camera").addEventListener("click", function () {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast("Aparat niedostępny — wybierz plik ze zdjęcia."); return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false })
+      .then(function (s) {
+        stream = s;
+        $("#camera-box").hidden = false;
+        $("#video").srcObject = s;
+        $("#btn-camera").hidden = true;
+        $("#drop").hidden = true;
+      })
+      .catch(function () {
+        toast("Nie udało się uruchomić aparatu. Sprawdź zgodę na kamerę lub wybierz plik.", 4200);
+      });
+  });
+  function cameraOff() {
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    $("#camera-box").hidden = true;
+    $("#video").srcObject = null;
+    $("#btn-camera").hidden = false;
+    $("#drop").hidden = false;
+  }
+  $("#btn-camera-off").addEventListener("click", cameraOff);
+  $("#btn-shoot").addEventListener("click", function () {
+    var v = $("#video");
+    if (!v.videoWidth) { toast("Kamera jeszcze nie wystartowała."); return; }
+    var c = document.createElement("canvas");
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0);
+    var url = c.toDataURL("image/jpeg", 0.92);
+    cameraOff();
+    var img = new Image();
+    img.onload = function () { showCropper(img, url); };
+    img.src = url;
+  });
+
+  // kadrowanie: przeciąganie
+  (function () {
+    var drag = null;
+    var el = $("#cropper");
+    el.addEventListener("pointerdown", function (e) {
+      if (!crop.img) { return; }
+      drag = { x: e.clientX, y: e.clientY, ox: crop.x, oy: crop.y, id: e.pointerId };
+      el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (!drag || drag.id !== e.pointerId) { return; }
+      crop.x = drag.ox + (e.clientX - drag.x);
+      crop.y = drag.oy + (e.clientY - drag.y);
+      clampCrop(); drawCrop();
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) {
+      el.addEventListener(ev, function (e) { if (drag && drag.id === e.pointerId) { drag = null; } });
+    });
+    // kółko myszy = zoom
+    el.addEventListener("wheel", function (e) {
+      if (!crop.img) { return; }
+      e.preventDefault();
+      var z = Math.min(3, Math.max(1, crop.zoom * (e.deltaY < 0 ? 1.06 : 0.94)));
+      zoomTo(z);
+    }, { passive: false });
+  })();
+  function zoomTo(z, keepCenter) {
+    var old = crop.zoom;
+    crop.zoom = z;
+    $("#zoom").value = String(z);
+    if (keepCenter !== false) {
+      var cx = crop.box / 2, cy = crop.box / 2;
+      crop.x = (crop.x + cx) * (z / old) - cx;
+      crop.y = (crop.y + cy) * (z / old) - cy;
+    }
+    clampCrop(); drawCrop();
+  }
+  $("#zoom").addEventListener("input", function () { zoomTo(parseFloat(this.value)); });
+  $("#btn-rot-l").addEventListener("click", function () { rotate(-90); });
+  $("#btn-rot-r").addEventListener("click", function () { rotate(90); });
+  function rotate(d) {
+    if (!crop.img) { return; }
+    crop.rotation = (crop.rotation + d + 360) % 360;
+    crop.x = 0; crop.y = 0;
+    requestAnimationFrame(function () { layoutCropFit(); });
+  }
+  $("#btn-change-photo").addEventListener("click", function () {
+    if (crop._url) { URL.revokeObjectURL(crop._url); crop._url = null; }
+    crop.img = null;
+    $("#crop-img").src = "";
+    $("#photo-crop").hidden = true;
+    $("#photo-pick").hidden = false;
+  });
+  function startPhotoEdit() {
+    showView("view-photo");
+    $("#view-photo").querySelector(".progress").hidden = hasWallet;
+    $("#btn-photo-skip").textContent = hasWallet ? "Anuluj" : "Pomiń — bez zdjęcia";
+    if (state.photo) {
+      var img = new Image();
+      img.onload = function () { showCropper(img, null); };
+      img.src = state.photo;
+    }
+  }
+  $("#btn-photo-save").addEventListener("click", function () {
+    var data = exportCropped(512);
+    if (!data) { toast("Najpierw wybierz zdjęcie."); return; }
+    state.photo = data;
+    save();
+    if (!state.person) { showView("view-data"); return; }
+    finishOnboarding();
+  });
+  $("#btn-photo-skip").addEventListener("click", function () {
+    if (hasWallet) { renderWallet(); showView("view-wallet"); return; }
+    if (!state.person) {
+      var v = validate(true);
+      if (!v.ok) { toast("Najpierw uzupełnij dane."); return; }
+      toast("Dane jeszcze nie zapisane — użyj przycisku „Dalej”.");
+      return;
+    }
+    finishOnboarding();
+  });
+  function finishOnboarding() {
+    var editing = hasWallet;
+    hasWallet = true;
+    renderWallet();
+    renderWalletCardPreview();
+    updateDataViewMode();
+    showView(editing ? "view-wallet" : "view-done");
+    refreshInstallUI();
+  }
+  function renderWalletCardPreview() { renderCard($("#done-card-slot")); }
+  function renderAll() { renderWallet(); renderWalletCardPreview(); updateDataViewMode(); }
+
+  // ustawienia
+  $("#btn-install").addEventListener("click", promptInstall);
+  $("#btn-install-2").addEventListener("click", promptInstall);
+  $("#btn-install-hero").addEventListener("click", promptInstall);
+  $("#btn-install-top").addEventListener("click", promptInstall);
+  $("#btn-install-help").addEventListener("click", function () { openSheet("Instalacja", installHelpHtml()); });
+  $("#btn-install-help-2").addEventListener("click", function () { openSheet("Instalacja", installHelpHtml()); });
+  $("#btn-open-wallet").addEventListener("click", function () { renderWallet(); showView("view-wallet"); });
+  $("#btn-export").addEventListener("click", function () {
+    var payload = {
+      format: "mobywatel-web-kopia", wersja: 1,
+      wygenerowano: new Date().toISOString(),
+      dane: state.person || null,
+      zdjecie: state.photo || null,
+      uwaga: "Kopia poglądowa — nie jest dokumentem. Plik zawiera dane osobowe: przechowuj go bezpiecznie."
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "mobywatel-kopia-" + new Date().toISOString().slice(0, 10) + ".json";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    toast("Kopia zapisana w plikach.");
+  });
+  $("#btn-import").addEventListener("click", function () { $("#import-input").click(); });
+  $("#import-input").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f) { return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var obj = safeParse(String(fr.result));
+      if (!obj || !obj.dane || !obj.dane.pesel) { toast("Nieprawidłowy plik kopii."); return; }
+      state.person = obj.dane;
+      state.photo = (obj.zdjecie && /^data:image\//.test(obj.zdjecie)) ? obj.zdjecie : state.photo;
+      save();
+      fillForm(state.person);
+      hasWallet = true;
+      renderAll();
+      showView("view-wallet");
+      toast("Kopia wczytana.");
+    };
+    fr.readAsText(f);
+  });
+  $("#btn-wipe").addEventListener("click", function () {
+    openSheet("Usunąć wszystkie dane?", '<div class="alert alert--err" style="margin-bottom:12px">Tej operacji nie można cofnąć. Dane i zdjęcie zostaną trwale usunięte z tej przeglądarki.</div>' +
+      '<div class="row" style="gap:10px"><button class="btn btn--danger btn--block" type="button" id="wipe-confirm">Usuń trwale</button>' +
+      '<button class="btn btn--ghost" type="button" data-act="close-sheet">Anuluj</button></div>');
+    var b = $("#wipe-confirm");
+    if (b) { b.addEventListener("click", function () { closeSheet(); wipe(); }); }
+  });
+
+  window.addEventListener("resize", function () {
+    if (!$("#photo-crop").hidden) { layoutCropFit(); }
+  });
+
+  /* ------------------------------------------------------------------ start */
+  (function boot() {
+    var had = load();
+    if (had) {
+      fillForm(state.person);
+      hasWallet = true;
+      renderAll();
+      $("#btn-start").innerHTML = "Otwórz portfel" +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14m-6-6l6 6-6 6"/></svg>';
+      $("#view-welcome").querySelector("p").textContent = "Portfel jest gotowy. Dane zostają na tym urządzeniu.";
+      showView("view-wallet", { replace: true });
+      $("#topbar").hidden = false;
+    }
+    refreshInstallUI();
+    // rejestracja service workera (offline) — tylko przez http/https
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* ignorujemy */ });
+    }
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+# =============================================================================
+#  SZABLON — skopiuj ten plik do .github/workflows/pages-public.yml
+#
+#  Dlaczego leży tutaj, a nie od razu w .github/workflows/?
+#  Bo GitHub Pages jest PUBLICZNE i publikowanie ma być Twoją świadomą decyzją,
+#  a nie efektem „przypadkiem włączonego workflow”. Dodatkowo token, którym
+#  pracował asystent, nie ma uprawnienia do zapisu plików workflow.
+#
+#  Jak włączyć (2 minuty, przez stronę GitHuba):
+#    1. Wejdź w repozytorium → Add file → Create new file
+#    2. Nazwa pliku:  .github/workflows/pages-public.yml
+#    3. Wklej całą zawartość TEGO pliku (od pierwszej linii poniżej).
+#    4. Commit. Workflow pojawi się w zakładce Actions — nadal nic nie publikuje.
+#    5. Żeby faktycznie opublikować:
+#         Settings → Secrets and variables → Actions → Variables →
+#         New repository variable:  ALLOW_PUBLIC_PAGES = true
+#       potem Actions → „Publikuj na GitHub Pages (PUBLICZNE!)” → Run workflow
+#       i wpisz TAK w polu potwierdzenia.
+#
+#  ⚠️  Adres będzie publiczny: https://drpeer.github.io/jardotexedotpng
+#      Prywatna alternatywa: deploy/PRYWATNY-HOSTING.md (Cloudflare Pages + Access).
+# =============================================================================
+
+# =============================================================================
+#  UWAGA: PUBLIKUJE STRONĘ PUBLICZNIE, DLA CAŁEGO INTERNETU.
+#
+#  GitHub Pages nie umie być prywatne. Nawet gdy repozytorium jest prywatne,
+#  opublikowana strona jest jawna, a jej adres łatwo zgadnąć:
+#  https://drpeer.github.io/jardotexedotpng
+#
+#  Dlatego ten workflow jest DOMYŚLNIE WYŁĄCZONY. Żeby cokolwiek opublikować,
+#  musisz świadomie wykonać oba kroki:
+#    1. Settings → Secrets and variables → Actions → Variables
+#       → New repository variable:  ALLOW_PUBLIC_PAGES = true
+#    2. Actions → „Publikuj na GitHub Pages (PUBLICZNE!)” → Run workflow
+#
+#  Chcesz prywatnie? Zobacz deploy/PRYWATNY-HOSTING.md (Cloudflare Pages +
+#  Access — darmowe, z logowaniem kodem e-mail).
+# =============================================================================
+name: Publikuj na GitHub Pages (PUBLICZNE!)
+
+on:
+  workflow_dispatch:
+    inputs:
+      potwierdzam-ze-ma-byc-publiczna:
+        description: 'Wpisz TAK, jeśli rozumiesz, że strona będzie PUBLICZNA'
+        required: true
+        default: 'NIE'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  warunki:
+    runs-on: ubuntu-latest
+    outputs:
+      wolno: ${{ steps.sprawdz.outputs.wolno }}
+    steps:
+      - id: sprawdz
+        run: |
+          if [ "${{ vars.ALLOW_PUBLIC_PAGES }}" = "true" ] && [ "${{ inputs.potwierdzam-ze-ma-byc-publiczna }}" = "TAK" ]; then
+            echo "wolno=yes" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Publikowanie publiczne::Ta strona będzie dostępna dla każdego w internecie."
+          else
+            echo "wolno=no" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Publikacja wstrzymana"
+              echo ""
+              echo "Brak jawnej zgody na publiczną stronę. Wymagane są OBA warunki:"
+              echo "1. zmienna repozytorium \`ALLOW_PUBLIC_PAGES=true\`,"
+              echo "2. wpisanie \`TAK\` w polu potwierdzenia przy uruchomieniu workflow."
+              echo ""
+              echo "Prywatny hosting: \`deploy/PRYWATNY-HOSTING.md\` → Cloudflare Pages + Access."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  zbuduj:
+    needs: warunki
+    if: needs.warunki.outputs.wolno == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Zbuduj paczkę statyczną
+        run: python3 tools/make_dist.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Testy (nie publikuj zepsutej wersji)
+        run: |
+          npm ci
+          npm test
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  opublikuj:
+    needs: [warunki, zbuduj]
+    if: needs.warunki.outputs.wolno == 'yes'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+      - name: Przypomnienie w podsumowaniu
+        run: |
+          {
+            echo "## Opublikowano — strona jest PUBLICZNA"
+            echo ""
+            echo "Adres: ${{ steps.deploy.outputs.page_url }}"
+            echo ""
+            echo "Każdy, kto zna ten adres, może otworzyć aplikację (dane użytkownika pozostają"
+            echo "w jego przeglądarce). Jeśli to nie było zamierzone — wyłącz Pages w"
+            echo "Settings → Pages, a prywatną alternatywę znajdziesz w \`deploy/PRYWATNY-HOSTING.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"

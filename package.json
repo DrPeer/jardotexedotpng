@@ -1,0 +1,17 @@
+{
+  "name": "mobywatel-web-pogladowa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Niezależna, w pełni lokalna kopia poglądowa mObywatela na przeglądarkę (PWA). Zero zależności produkcyjnych — jsdom jest tylko do testów.",
+  "license": "MIT",
+  "scripts": {
+    "test": "npm run test:smoke && npm run test:crop",
+    "test:smoke": "node tools/smoke-test.js",
+    "test:crop": "node tools/crop-test.js",
+    "dist": "python3 tools/make_dist.py",
+    "start": "python3 server.py --open"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  }
+}

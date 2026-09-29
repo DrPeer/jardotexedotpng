@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="mObywatel — kopia poglądowa">
+  <rect width="512" height="512" rx="112" fill="#1B2B45"/>
+  <g transform="translate(256 262)">
+    <rect x="-150" y="-96" width="300" height="192" rx="26" fill="#FFFFFF"/>
+    <path d="M-150 -70a26 26 0 0126-26h248a26 26 0 0126 26v34h-300z" fill="#CC2430"/>
+    <rect x="-96" y="26" width="182" height="18" rx="9" fill="#1B2B45" opacity=".22"/>
+    <rect x="-96" y="56" width="126" height="18" rx="9" fill="#1B2B45" opacity=".22"/>
+    <circle cx="86" cy="34" r="34" fill="#E4EAF3"/>
+    <path d="M86 34m-21 0a21 21 0 1042 0a21 21 0 10-42 0" fill="#1B2B45" opacity=".35"/>
+  </g>
+</svg>
