@@ -191,7 +191,13 @@ adresem z Twojej prywatnej sieci VPN — nikt z internetu go nie widzi.
 
 ## Opcja D — GitHub Pages (świadomie publiczna)
 
-Jeśli kiedyś uznasz, że jednak może być publiczna, w repozytorium leży gotowy szablon
+Jeśli uznasz, że jednak może być publiczna — **paczka jest już gotowa**: katalog `docs/` na gałęzi
+`main` (zbudowany przez `python3 tools/make_dist.py --docs`). Wystarczy:
+Settings → General → Change visibility → **Public**, a potem
+Settings → **Pages** → *Deploy from a branch* → `main` + `/docs` → **Save**.
+Adres: `https://drpeer.github.io/jardotexedotpng/`. Z powrotem na Private = strona gaśnie (plan Free).
+
+Wariant alternatywny (przez Actions) leży w gotowym szablonie
 [`deploy/github-pages-public.yml`](github-pages-public.yml) — z instrukcją w nagłówku pliku.
 Jest **wyłączony domyślnie**: publikuje dopiero, gdy sam wkleisz go do `.github/workflows/`,
 ustawisz zmienną `ALLOW_PUBLIC_PAGES=true` i ręcznie uruchomisz workflow, wpisując `TAK`

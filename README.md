@@ -85,7 +85,34 @@ Dlatego w repozytorium jest gotowy przepis na **naprawdę prywatny** hosting —
 | **Cloudflare Pages + Access** (zalecane) | ✅ tak | 0 zł | adres `*.pages.dev` albo własna domena, logowanie **kodem e-mail** (Zero Trust Free do 50 osób), zero zmian w kodzie |
 | **Lokalnie + tunel** | ✅ tak | 0 zł | `python3 server.py --auth anna:haslo --tunnel` — dostęp z telefonu przez losowy adres + hasło |
 | **Tylko dom / LAN / Tailscale** | ✅ tak | 0 zł | serwer w ogóle nie trafia do internetu |
-| GitHub Pages (szablon w `deploy/`) | ❌ **nie** | 0 zł | wyłączony domyślnie — publikuje dopiero po świadomym wklejeniu szablonu i włączeniu zmiennej `ALLOW_PUBLIC_PAGES` |
+| GitHub Pages — **gotowe w `docs/`** | ❌ **nie** | 0 zł | 3 kliknięcia i działa (instrukcja niżej), ale strona jest publiczna dla każdego |
+
+### Publikacja na GitHub Pages (publiczna) — 3 kliknięcia
+
+Paczka strony jest już zbudowana i wgrana na `main` do katalogu **`docs/`** (z plikiem `.nojekyll`).
+Nie potrzeba do tego GitHub Actions ani żadnych plików workflow:
+
+1. **Udostępnij repozytorium**: Settings → General → *Danger Zone* → **Change visibility → Public**.
+   (Plan darmowy pozwala na Pages tylko z publicznego repozytorium.)
+2. **Włącz Pages**: Settings → **Pages** → *Source*: **Deploy from a branch** →
+   *Branch*: **`main`**, folder: **`/docs`** → **Save**.
+3. **Poczekaj ~1 minutę** i otwórz: `https://drpeer.github.io/jardotexedotpng/`
+
+Weryfikacja z terminala:
+
+```bash
+python3 tools/check_private.py https://drpeer.github.io/jardotexedotpng
+# ❌ PUBLICZNE — dokładnie tak, jak wygląda ta droga (dane użytkownika i tak zostają lokalnie)
+
+curl -sI https://drpeer.github.io/jardotexedotpng/ | head -1     # HTTP/1.1 200 OK
+```
+
+Po otwarciu strony w Chrome/Edge pojawi się przycisk **„Zainstaluj”** w pasku adresu — aplikacja
+wyląduje na pulpicie i będzie działać offline.
+
+> ⚠️ **Cofnięcie repo na Private wyłączy stronę** (plan Free). Gdybyś miał Pro, Pages z prywatnego
+> repozytorium zadziała, ale **strona i tak będzie publiczna** — prywatność strony ma wyłącznie
+> Enterprise Cloud. Naprawdę prywatna alternatywa: [Cloudflare Pages + Access](#opcja-a--cloudflare-pages--cloudflare-access-zalecana).
 
 ### Własny serwer z bramką hasła
 
@@ -110,6 +137,7 @@ python3 tools/make_dist.py --zip   # tworzy dist/ oraz dist.zip (do wgrania na h
 python3 server.py --dist           # podgląd dokładnie tej paczki na localhost
 ```
 
+`docs/` (dla GitHub Pages) buduje się razem z paczką: `python3 tools/make_dist.py --docs --zip`.
 `dist/` zawiera też plik `_headers` z polityką CSP (`default-src 'self'`), czyli hostowana strona
 technicznie nie może łączyć się z żadnym zewnętrznym serwerem.
 
