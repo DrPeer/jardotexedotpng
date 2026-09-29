@@ -12,3 +12,6 @@ Thumbs.db
 
 # Zbudowana paczka (tworzona przez tools/make_dist.py) — nie trzymamy jej w repo
 dist/
+
+# Paczka ZIP dla hostingu (tworzona przez tools/make_dist.py --zip)
+dist.zip

@@ -11,8 +11,10 @@ i Netlify.
 """
 from __future__ import annotations
 
+import argparse
 import shutil
 import sys
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -56,7 +58,26 @@ dokumentów. Dane wpisane w aplikacji zostają wyłącznie w przeglądarce
 """
 
 
+def make_zip(zip_path: Path) -> Path:
+    """Pakuje ZAWARTOŚĆ dist/ (bez podkatalogu) do pliku .zip.
+
+    Cloudflare Pages „Upload assets” przyjmuje też plik ZIP, a wtedy w archiwum
+    NIE może być katalogu nadrzędnego — index.html musi leżeć w korzeniu."""
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for f in sorted(DIST.rglob("*")):
+            if f.is_file():
+                z.write(f, f.relative_to(DIST).as_posix())
+    return zip_path
+
+
 def main() -> int:
+    ap = argparse.ArgumentParser(description="Buduje dist/ gotowy do publikacji.")
+    ap.add_argument("--zip", action="store_true",
+                    help="dodatkowo spakuj dist/ do dist.zip (do przeciągnięcia na Cloudflare Pages)")
+    args = ap.parse_args()
+
     if DIST.exists():
         shutil.rmtree(DIST)
     DIST.mkdir(parents=True)
@@ -81,8 +102,13 @@ def main() -> int:
     if missing:
         print("\n  ! Pominięto brakujące pliki: " + ", ".join(missing))
         return 1
+    if args.zip:
+        zip_path = make_zip(ROOT / "dist.zip")
+        print(f"\n  dist.zip gotowe: {zip_path.stat().st_size / 1024:.0f} kB  ({zip_path})")
+        print("  To ten plik wrzucasz na Cloudflare Pages (Upload assets → wybierz dist.zip).")
     print("\n  Dalej: wrzuć CAŁĄ zawartość dist/ na hosting (przeciągnij-i-upuść),")
     print("  albo przetestuj lokalnie:  python3 server.py --dist")
+    print("  Instrukcja krok po kroku:  deploy/PRYWATNY-HOSTING.md")
     return 0
 
 

@@ -106,8 +106,8 @@ python3 tools/check_private.py https://twoj-adres.pages.dev
 ### Publikowanie gdziekolwiek (Cloudflare Pages, Netlify, Vercel, własny serwer)
 
 ```bash
-python3 tools/make_dist.py      # tworzy dist/ — paczkę do przeciągnięcia na hosting
-python3 server.py --dist        # podgląd dokładnie tej paczki na localhost
+python3 tools/make_dist.py --zip   # tworzy dist/ oraz dist.zip (do wgrania na hosting)
+python3 server.py --dist           # podgląd dokładnie tej paczki na localhost
 ```
 
 `dist/` zawiera też plik `_headers` z polityką CSP (`default-src 'self'`), czyli hostowana strona
